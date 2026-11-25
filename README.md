@@ -1,6 +1,6 @@
 # Vistto Cidadão
 
-Ferramenta gratuita para quem mora de aluguel em São Paulo conferir, antes de pagar ou assinar, se o aluguel é seguro.
+Ferramenta gratuita para quem mora de aluguel em qualquer região de São Paulo conferir, antes de pagar ou assinar, se o aluguel é seguro.
 
 Projeto acadêmico da FIAP (Sub Global Solution 2 — CitizenTech: Tecnologia a Serviço do Cidadão).
 Guilherme Hideki Takara Chalita — RM 561845.
@@ -12,6 +12,7 @@ Guilherme Hideki Takara Chalita — RM 561845.
 | **É golpe?** | Visão Computacional (Claude Sonnet 5.5, multimodal) | Lê foto de anúncio, boleto/PIX, documento do imóvel ou print de conversa e aponta sinais de golpe. No boleto, os dígitos verificadores da linha digitável são conferidos por código (módulos 10 e 11 da FEBRABAN). |
 | **Entenda o contrato** | IA generativa com saída estruturada | Lê o contrato em foto ou PDF, explica em linguagem simples e avalia cláusulas à luz da Lei do Inquilinato (Lei 8.245/1991). |
 | **Aluguel justo** | Análise de Dados | Compara o preço com a média do bairro (dados públicos), calcula o peso na renda e confere o reajuste pelo IGP-M ou IPCA, consultando a API do Banco Central. |
+| **HIS e HMP** | IA + Análise de Dados | Identifica no contrato ou na matrícula se o imóvel é Habitação de Interesse Social ou de Mercado Popular e calcula o aluguel máximo permitido em São Paulo (30% da renda máxima da faixa; Decreto 63.130/2024, art. 7º-A, e Decreto 64.895/2026). |
 | **Painel** | Análise de Dados | Totais anônimos por tipo de sinal, bairro e mês. |
 
 Acessibilidade: semáforo com cor + ícone + texto, leitura em voz alta (Web Speech API), alto contraste, aumento de fonte, navegação por teclado e linguagem simples.
@@ -48,7 +49,7 @@ Abra http://localhost:3000. Sem `ANTHROPIC_API_KEY`, o cadastro, o "Aluguel just
 
 ## Dados
 
-- `src/data/aluguel_bairros.json`: preço de aluguel por m² em 37 bairros de São Paulo. Cada linha indica a fonte (Índice FipeZAP, Índice QuintoAndar Imovelweb, Loft) e a data de referência. As metodologias não são idênticas entre as fontes; o app mostra a fonte usada em cada comparação.
+- `src/data/aluguel_bairros.json`: preço de aluguel por m² em 37 bairros de São Paulo; para os demais, o app usa a média do município. Cada linha indica a fonte (Índice FipeZAP, Índice QuintoAndar Imovelweb, Loft) e a data de referência. As metodologias não são idênticas entre as fontes; o app mostra a fonte usada em cada comparação.
 - O painel nasce com 200 registros **simulados** (`demo = true`), sempre identificados como demonstração na tela.
 
 ## Limites

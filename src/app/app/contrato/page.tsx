@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { Consentimento, EnvioArquivo, type ArquivoPronto } from "@/components/EnvioArquivo";
-import { VerContrato } from "@/components/Resultados";
+import { VerContrato, type ResultadoContrato } from "@/components/Resultados";
 import { Botao, Campo, Cartao, entrada, Erro, postar, Titulo } from "@/components/ui";
-import type { ContratoResultado } from "@/lib/claude";
 
 export default function Contrato() {
   const [arquivos, setArquivos] = useState<ArquivoPronto[]>([]);
@@ -12,7 +11,8 @@ export default function Contrato() {
   const [consentimento, setConsentimento] = useState(false);
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState("");
-  const [resultado, setResultado] = useState<ContratoResultado | null>(null);
+  const [resultado, setResultado] = useState<ResultadoContrato | null>(null);
+  const [faixaHis, setFaixaHis] = useState("");
 
   async function enviar(e: React.FormEvent) {
     e.preventDefault();
@@ -21,9 +21,10 @@ export default function Contrato() {
     if (!consentimento) return setErro("Marque a caixa de concordância para continuar.");
     setCarregando(true);
     try {
-      const r = await postar<{ resultado: ContratoResultado }>("/api/analises/contrato", {
+      const r = await postar<{ resultado: ResultadoContrato }>("/api/analises/contrato", {
         arquivos: arquivos.map(({ media_type, data }) => ({ media_type, data })),
         observacao: observacao || undefined,
+        faixaHis: faixaHis || undefined,
         consentimento: true,
       });
       setResultado(r.resultado);
@@ -63,13 +64,27 @@ export default function Contrato() {
       <form onSubmit={enviar} className="space-y-5">
         <Cartao>
           <h2 className="mb-3 text-xl font-bold">1. Envie o contrato</h2>
-          <EnvioArquivo arquivos={arquivos} aoMudar={setArquivos} maximo={8} rotulo="PDF do contrato ou fotos das páginas (em ordem)" />
+          <EnvioArquivo arquivos={arquivos} aoMudar={setArquivos} maximo={8} rotulo="PDF ou fotos do contrato (ou da matrícula do imóvel)" />
           <p className="mt-3 text-sm text-suave">
             Dica: tire as fotos com boa luz, uma página por foto, pegando a folha inteira.
           </p>
         </Cartao>
         <Cartao>
-          <h2 className="mb-3 text-xl font-bold">2. Tem alguma dúvida específica?</h2>
+          <h2 className="mb-3 text-xl font-bold">2. O imóvel é de habitação social (HIS ou HMP)?</h2>
+          <Campo
+            rotulo="Classificação do imóvel"
+            ajuda="Se você não sabe, deixe assim: a análise procura essa informação no documento. Imóveis HIS e HMP têm aluguel máximo por regra da prefeitura."
+          >
+            <select className={entrada} value={faixaHis} onChange={(e) => setFaixaHis(e.target.value)}>
+              <option value="">Não sei (procurar no documento)</option>
+              <option value="HIS-1">HIS 1</option>
+              <option value="HIS-2">HIS 2</option>
+              <option value="HMP">HMP</option>
+            </select>
+          </Campo>
+        </Cartao>
+        <Cartao>
+          <h2 className="mb-3 text-xl font-bold">3. Tem alguma dúvida específica?</h2>
           <Campo rotulo="Sua dúvida (opcional)" ajuda="Ex.: posso sair antes do prazo? Quem paga o IPTU?">
             <input className={entrada} value={observacao} onChange={(e) => setObservacao(e.target.value)} maxLength={500} />
           </Campo>

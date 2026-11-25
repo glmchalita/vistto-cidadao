@@ -26,6 +26,8 @@ const TIPOS: { tipo: string; peso: number; sinais: string[]; titulo: string }[] 
     sinais: ["preco_acima_mercado", "renda_comprometida"] },
   { tipo: "reajuste", peso: 4, titulo: "Reajuste conferido",
     sinais: ["reajuste_acima_indice"] },
+  { tipo: "his", peso: 6, titulo: "Teto de aluguel HIS/HMP conferido",
+    sinais: ["aluguel_acima_teto_his", "renda_fora_da_faixa_his"] },
 ];
 
 function prng(seed: number) {
@@ -54,8 +56,8 @@ export function gerarSeed(total = 200) {
         break;
       }
     }
-    // Bairros do inicio da lista (periferia) aparecem mais.
-    const bairro = BAIRROS[Math.floor(Math.pow(r(), 1.6) * BAIRROS.length)];
+    // Todas as regioes da cidade aparecem com a mesma chance.
+    const bairro = BAIRROS[Math.floor(r() * BAIRROS.length)];
     const x = r();
     const risco: Risco = x < 0.38 ? "vermelho" : x < 0.72 ? "amarelo" : "verde";
     const qtd = risco === "verde" ? 0 : risco === "amarelo" ? 1 + Math.floor(r() * 2) : 2 + Math.floor(r() * 2);
@@ -66,7 +68,7 @@ export function gerarSeed(total = 200) {
     }
     const diasAtras = Math.floor(r() * 180);
     linhas.push({
-      id: `demo-${String(i + 1).padStart(4, "0")}`,
+      id: `demo2-${String(i + 1).padStart(4, "0")}`,
       userId: null,
       tipo: t.tipo,
       risco,

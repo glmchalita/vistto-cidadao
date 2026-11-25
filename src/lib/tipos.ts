@@ -11,6 +11,7 @@ export const ROTULO_TIPO: Record<string, string> = {
   contrato: "Contrato",
   preco: "Preço do aluguel",
   reajuste: "Reajuste",
+  his: "Teto HIS/HMP",
 };
 
 export const SINAIS = [
@@ -28,6 +29,8 @@ export const SINAIS = [
   "preco_acima_mercado",
   "reajuste_acima_indice",
   "renda_comprometida",
+  "aluguel_acima_teto_his",
+  "renda_fora_da_faixa_his",
   "outro",
 ] as const;
 export type Sinal = (typeof SINAIS)[number];
@@ -47,6 +50,8 @@ export const ROTULO_SINAL: Record<string, string> = {
   preco_acima_mercado: "Preço acima da média do bairro",
   reajuste_acima_indice: "Reajuste acima do índice",
   renda_comprometida: "Aluguel pesa demais na renda",
+  aluguel_acima_teto_his: "Aluguel acima do teto de HIS/HMP",
+  renda_fora_da_faixa_his: "Renda fora da faixa do imóvel HIS/HMP",
   outro: "Outro sinal",
 };
 

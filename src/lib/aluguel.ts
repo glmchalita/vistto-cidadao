@@ -6,7 +6,19 @@ import type { Risco } from "./tipos";
 
 export type Bairro = { bairro: string; zona: string; preco_m2: number; fonte: string; referencia: string };
 
-export const BAIRROS = (dados as Bairro[]).slice().sort((a, b) => a.bairro.localeCompare(b.bairro, "pt-BR"));
+// Para qualquer ponto da cidade fora da base por bairro, vale a media do municipio.
+export const MEDIA_CIDADE: Bairro = {
+  bairro: "Outro bairro (média da cidade de São Paulo)",
+  zona: "cidade inteira",
+  preco_m2: 66.16,
+  fonte: "Índice FipeZAP de Locação Residencial (Fipe/Grupo OLX), informe de outubro/2026, média do município",
+  referencia: "2026-10",
+};
+
+export const BAIRROS = [
+  ...(dados as Bairro[]).slice().sort((a, b) => a.bairro.localeCompare(b.bairro, "pt-BR")),
+  MEDIA_CIDADE,
+];
 
 export function acharBairro(nome: string) {
   return BAIRROS.find((b) => b.bairro === nome) ?? null;

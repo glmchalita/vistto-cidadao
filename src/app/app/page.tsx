@@ -20,13 +20,13 @@ const FERRAMENTAS = [
     href: "/app/contrato",
     Icone: FileText,
     titulo: "Entenda o contrato",
-    texto: "Envie o contrato em foto ou PDF. A gente explica em palavras simples e aponta cláusulas abusivas.",
+    texto: "Envie o contrato ou a matrícula. A gente explica em palavras simples, aponta cláusulas abusivas e diz se o imóvel é HIS.",
   },
   {
     href: "/app/aluguel",
     Icone: Scale,
     titulo: "Aluguel justo",
-    texto: "Compare o preço com a média do bairro, veja o peso na sua renda e confira se o reajuste está certo.",
+    texto: "Compare o preço com a média do bairro, confira o reajuste e veja o aluguel máximo se o imóvel for HIS ou HMP.",
   },
 ];
 

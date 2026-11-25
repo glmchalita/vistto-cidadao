@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { VerPreco, VerReajuste, type ResultadoReajuste } from "@/components/Resultados";
-import { Botao, Campo, Cartao, chamar, entrada, Erro, postar, Titulo } from "@/components/ui";
+import { VerHis, VerPreco, VerReajuste, type ResultadoReajuste } from "@/components/Resultados";
+import { Botao, brl, Campo, Cartao, chamar, entrada, Erro, postar, Titulo } from "@/components/ui";
+import { FAIXAS_HIS, HIS_REFERENCIA, tetoAluguel, type ConferenciaHis, type FaixaId } from "@/lib/his";
 import type { Bairro, Comparacao } from "@/lib/aluguel";
 
 /** Aceita "1.200,50", "1200.50" ou "1200". */
@@ -50,7 +51,7 @@ function Comparar({ bairros }: { bairros: Bairro[] }) {
                 <option value="">Escolha o bairro</option>
                 {bairros.map((b) => (
                   <option key={b.bairro} value={b.bairro}>
-                    {b.bairro} ({b.zona})
+                    {b.zona === "cidade inteira" ? b.bairro : `${b.bairro} (${b.zona})`}
                   </option>
                 ))}
               </select>
@@ -141,8 +142,117 @@ function Reajuste() {
   );
 }
 
+function His() {
+  const [faixaId, setFaixaId] = useState<FaixaId>("HIS-1");
+  const [aluguel, setAluguel] = useState("");
+  const [renda, setRenda] = useState("");
+  const [pessoas, setPessoas] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [r, setR] = useState<ConferenciaHis | null>(null);
+
+  async function enviar(e: React.FormEvent) {
+    e.preventDefault();
+    setErro("");
+    const p = pessoas ? Math.round(numero(pessoas)) : undefined;
+    if (p !== undefined && !(p >= 1 && p <= 20)) return setErro("Informe quantas pessoas moram na casa (de 1 a 20).");
+    setCarregando(true);
+    try {
+      const resp = await postar<{ resultado: ConferenciaHis }>("/api/aluguel/his", {
+        faixa: faixaId,
+        aluguel: aluguel ? numero(aluguel) : undefined,
+        rendaFamiliar: renda ? numero(renda) : undefined,
+        pessoas: p,
+      });
+      setR(resp.resultado);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Algo deu errado.");
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  return (
+    <div className="space-y-5">
+      <Cartao>
+        <h2 className="mb-2 text-xl font-bold">O que é HIS e HMP</h2>
+        <p className="text-lg">
+          São apartamentos construídos com incentivo da Prefeitura de São Paulo, em qualquer região da cidade, reservados por 10 anos a
+          famílias com renda limitada. Nesses imóveis, o aluguel tem valor máximo: 30% da renda máxima da faixa.
+        </p>
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left">
+            <caption className="sr-only">Faixas de renda e aluguel máximo de HIS e HMP em {HIS_REFERENCIA.ano}</caption>
+            <thead>
+              <tr className="border-b border-borda text-sm text-suave">
+                <th className="py-2 pr-3 font-semibold">Tipo</th>
+                <th className="py-2 pr-3 text-right font-semibold">Renda familiar até</th>
+                <th className="py-2 pr-3 text-right font-semibold">ou renda por pessoa até</th>
+                <th className="py-2 text-right font-semibold">Aluguel máximo</th>
+              </tr>
+            </thead>
+            <tbody className="tabular-nums">
+              {FAIXAS_HIS.map((f) => (
+                <tr key={f.id} className="border-b border-grade">
+                  <th scope="row" className="py-2 pr-3 font-semibold">{f.nome}</th>
+                  <td className="py-2 pr-3 text-right">{brl(f.rendaFamiliar)}</td>
+                  <td className="py-2 pr-3 text-right">{brl(f.rendaPerCapita)}</td>
+                  <td className="py-2 text-right font-bold">{brl(tetoAluguel(f.id))}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm text-suave">
+          Valores de {HIS_REFERENCIA.ano}. Faixas: {HIS_REFERENCIA.decretoRenda}. Teto: {HIS_REFERENCIA.decretoAluguel}.
+        </p>
+        <h3 className="mt-5 text-lg font-bold">Como saber se o imóvel é HIS ou HMP</h3>
+        <ul className="mt-2 list-disc space-y-1 pl-6 text-lg">
+          <li>Na matrícula do imóvel, pedida no cartório de registro de imóveis: a destinação fica averbada.</li>
+          <li>No contrato de aluguel: ele precisa ter uma cláusula sobre o enquadramento da renda da família.</li>
+          <li>No prédio e na propaganda: o empreendimento deve ter placa de identificação da prefeitura.</li>
+          <li>
+            Ou envie o contrato ou a matrícula em <strong>Contrato</strong>: a análise procura essa informação para você.
+          </li>
+        </ul>
+      </Cartao>
+
+      <Cartao>
+        <form onSubmit={enviar} className="space-y-4">
+          <h2 className="text-xl font-bold">Conferir o meu caso</h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Campo rotulo="Tipo do imóvel">
+              <select className={entrada} value={faixaId} onChange={(e) => setFaixaId(e.target.value as FaixaId)}>
+                {FAIXAS_HIS.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.nome}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+            <Campo rotulo="Aluguel cobrado (R$ por mês, opcional)">
+              <input className={entrada} value={aluguel} onChange={(e) => setAluguel(e.target.value)} inputMode="decimal" placeholder="Ex.: 2.300" />
+            </Campo>
+            <Campo rotulo="Renda da família por mês (opcional)" ajuda="Não fica guardada. Serve para ver se a família se enquadra na faixa.">
+              <input className={entrada} value={renda} onChange={(e) => setRenda(e.target.value)} inputMode="decimal" placeholder="Ex.: 4.000" />
+            </Campo>
+            <Campo rotulo="Pessoas na casa (opcional)">
+              <input className={entrada} value={pessoas} onChange={(e) => setPessoas(e.target.value)} inputMode="numeric" placeholder="Ex.: 3" />
+            </Campo>
+          </div>
+          <Erro>{erro}</Erro>
+          <Botao type="submit" carregando={carregando}>
+            Ver o aluguel máximo
+          </Botao>
+        </form>
+      </Cartao>
+      {r && <VerHis r={r} />}
+    </div>
+  );
+}
+
 export default function Aluguel() {
-  const [aba, setAba] = useState<"preco" | "reajuste">("preco");
+  const [aba, setAba] = useState<"preco" | "reajuste" | "his">("preco");
   const [bairros, setBairros] = useState<Bairro[]>([]);
 
   useEffect(() => {
@@ -154,11 +264,12 @@ export default function Aluguel() {
   const abas = [
     { id: "preco" as const, rotulo: "O preço está justo?" },
     { id: "reajuste" as const, rotulo: "O reajuste está certo?" },
+    { id: "his" as const, rotulo: "É HIS? Qual o teto?" },
   ];
 
   return (
     <>
-      <Titulo sub="Contas feitas com dados públicos: preço médio por bairro e índices oficiais do Banco Central.">Aluguel justo</Titulo>
+      <Titulo sub="Contas feitas com dados públicos: preço médio por bairro, índices do Banco Central e o teto de aluguel dos imóveis de habitação social (HIS e HMP).">Aluguel justo</Titulo>
       <div role="tablist" aria-label="Tipo de conferência" className="mb-5 flex flex-wrap gap-2">
         {abas.map((a) => (
           <button
@@ -175,7 +286,7 @@ export default function Aluguel() {
           </button>
         ))}
       </div>
-      <div role="tabpanel">{aba === "preco" ? <Comparar bairros={bairros} /> : <Reajuste />}</div>
+      <div role="tabpanel">{aba === "preco" ? <Comparar bairros={bairros} /> : aba === "reajuste" ? <Reajuste /> : <His />}</div>
     </>
   );
 }

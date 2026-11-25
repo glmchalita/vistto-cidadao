@@ -65,15 +65,31 @@ const EXEMPLO_CONTRATO = {
   resultado: {
     risco: "vermelho",
     resumo_simples:
-      "Este contrato tem várias cláusulas que a lei não permite. Do jeito que está, não assine. As principais são: pedir duas garantias ao mesmo tempo, caução de cinco aluguéis e reajuste a cada seis meses.",
+      "Este contrato tem várias cláusulas que a lei não permite e cobra um aluguel acima do máximo permitido para um imóvel HIS 1. Do jeito que está, não assine.",
     dados_principais: {
-      valor_aluguel: "R$ 1.500,00 por mês",
+      valor_aluguel: "R$ 1.900,00 por mês",
       prazo: "30 meses (01/12/2026 a 31/05/2029)",
       garantia: "Caução de 5 aluguéis e fiador",
       indice_reajuste: "Salário mínimo ou IGP-M, a cada 6 meses",
       multa_rescisao: "3 aluguéis, sem desconto pelo tempo cumprido",
       dia_vencimento: "Dia 5",
     },
+    habitacao_social: {
+      classificacao: "HIS-1",
+      evidencia: "A unidade é classificada como Habitação de Interesse Social - HIS 1, conforme averbação AV-5 da matrícula nº 123.456",
+      tem_clausula_de_enquadramento: false,
+    },
+    his: {
+      faixa: "HIS-1", nomeFaixa: "HIS 1", rendaMaximaFaixa: 4863, rendaPerCapitaFaixa: 810.5,
+      teto: 1458.9, aluguel: 1900, excesso: 441.1, excessoAnual: 5293.2, acimaDoTeto: true,
+      faixaDaFamilia: null, familiaSeEnquadra: null, sinais: ["aluguel_acima_teto_his"], risco: "vermelho",
+      referencia: {
+        ano: 2026, salarioMinimo: 1621, decretoRenda: "Decreto municipal 64.895, de 5 de janeiro de 2026",
+        decretoAluguel: "Decreto municipal 63.130/2024, art. 7º-A (redação do Decreto 64.244/2025)",
+        percentual: 0.3, prazoAnos: 10,
+      },
+    },
+    faixaHisInformada: null,
     clausulas: [
       { titulo: "Duas garantias ao mesmo tempo", avaliacao: "abusiva", trecho: "o LOCATÁRIO oferece, cumulativamente: (a) caução em dinheiro [...] e (b) fiador", explicacao_simples: "O dono só pode pedir um tipo de garantia: ou caução, ou fiador, ou seguro. Pedir dois é proibido.", base_legal: "Lei 8.245/1991, art. 37, parágrafo único, e art. 43, II" },
       { titulo: "Caução de cinco aluguéis", avaliacao: "abusiva", trecho: "caução em dinheiro no valor de 5 (cinco) aluguéis [...] sem correção", explicacao_simples: "A caução em dinheiro pode ser de no máximo três aluguéis e precisa ficar em poupança. No fim, ela volta para você com os rendimentos.", base_legal: "Lei 8.245/1991, art. 38, § 2º" },
@@ -148,6 +164,16 @@ async function sessao(viewport, sufixo) {
   await page.getByRole("button", { name: "Conferir reajuste" }).click();
   await page.getByText("Como a conta foi feita").waitFor();
   await foto("06-aluguel-reajuste");
+
+  // Aluguel justo: teto de HIS/HMP (calculo real)
+  await page.getByRole("tab", { name: "É HIS? Qual o teto?" }).click();
+  await page.getByLabel("Tipo do imóvel").selectOption("HIS-2");
+  await page.getByLabel("Aluguel cobrado (R$ por mês, opcional)").fill("3.400");
+  await page.getByLabel("Renda da família por mês (opcional)").fill("7.500");
+  await page.getByLabel("Pessoas na casa (opcional)").fill("3");
+  await page.getByRole("button", { name: "Ver o aluguel máximo" }).click();
+  await page.getByRole("heading", { name: "O que fazer agora" }).waitFor();
+  await foto("11-his-teto");
 
   // E golpe? (formulario e resultado)
   await page.goto(BASE + "/app/golpe");

@@ -44,6 +44,15 @@ export const ContratoSchema = z.object({
     multa_rescisao: z.string().nullable(),
     dia_vencimento: z.string().nullable(),
   }),
+  habitacao_social: z.object({
+    classificacao: z
+      .enum(["HIS-1", "HIS-2", "HMP", "HIS_sem_faixa", "nao_identificado"])
+      .describe("Como o documento classifica o imóvel. Use nao_identificado se o texto não menciona HIS nem HMP."),
+    evidencia: z.string().nullable().describe("Trecho copiado do documento que mostra a classificação, se houver."),
+    tem_clausula_de_enquadramento: z
+      .boolean()
+      .describe("Verdadeiro se o contrato tem cláusula declarando que a renda da família locatária se enquadra na faixa."),
+  }),
   clausulas: z.array(
     z.object({
       titulo: z.string(),
@@ -100,6 +109,8 @@ O arquivo é um contrato de locação residencial (PDF ou fotos das páginas). E
 - Art. 17 e art. 18, com a Lei 10.192/2001: o reajuste segue o índice escrito no contrato e só pode acontecer uma vez por ano. É proibido atrelar o aluguel ao salário mínimo ou a moeda estrangeira.
 - Art. 27: o inquilino tem preferência para comprar o imóvel se ele for posto à venda.
 - Art. 45: são nulas as cláusulas que tentam afastar os direitos que a lei dá ao inquilino.
+
+Habitação de Interesse Social (HIS) e de Mercado Popular (HMP) no município de São Paulo: são unidades construídas com incentivo da prefeitura e destinadas, por 10 anos, a famílias de renda limitada (HIS 1, HIS 2 ou HMP). Pelo Decreto municipal 63.130/2024, com a redação do Decreto 64.244/2025, o aluguel dessas unidades não pode passar de 30% da renda máxima da faixa (art. 7º-A), o contrato de locação deve ter cláusula que demonstre o enquadramento da renda da família (art. 7º, IV) e é proibido o aluguel de curta temporada. Procure no documento qualquer menção a "HIS", "HMP", "Habitação de Interesse Social", "Habitação de Mercado Popular", "interesse social", "mercado popular", ao art. 46 ou 47 da Lei 16.050/2014 (Plano Diretor) ou a averbação desse tipo na matrícula, e preencha "habitacao_social" com o que encontrar. Se o arquivo for a matrícula do imóvel em vez do contrato, leia-a do mesmo jeito e diga em "resumo_simples" que se trata da matrícula. A comparação do valor do aluguel com o teto em reais é feita depois por outro sistema; sua parte é identificar a classificação e transcrever o valor do aluguel com exatidão.
 
 Em "clausulas", inclua as que mais importam para o bolso e a segurança de quem aluga (valor, reajuste, garantia, multa, prazo, quem paga o quê, vistoria, devolução) e todas as que avaliar como "atencao" ou "abusiva". Use "abusiva" somente quando a cláusula contraria a lei, citando o artigo em base_legal; use "atencao" para o que é permitido mas desfavorável ou confuso. Se alguma página estiver ilegível ou faltando, diga isso em "limitacoes". Sua análise é uma orientação inicial, não substitui a Defensoria Pública, o Procon ou um advogado; diga isso em "limitacoes" e indique a Defensoria quando houver cláusula abusiva.`;
 
@@ -175,9 +186,11 @@ export function analisarGolpe(
   return analisar(GolpeSchema, `${GOLPE_BASE}\n\n${FOCO[tipo]}`, arquivos, linhas.join("\n"));
 }
 
-export function analisarContrato(arquivos: ArquivoEnviado[], observacao?: string) {
-  const contexto = observacao
-    ? `Analise o contrato acima. Dúvida escrita pela pessoa: ${observacao}`
-    : "Analise o contrato acima.";
-  return analisar(ContratoSchema, CONTRATO_SISTEMA, arquivos, contexto);
+export function analisarContrato(arquivos: ArquivoEnviado[], observacao?: string, faixaInformada?: string) {
+  const linhas = [
+    "Analise o documento acima.",
+    faixaInformada ? `A pessoa informou que o imóvel é ${faixaInformada}.` : null,
+    observacao ? `Dúvida escrita pela pessoa: ${observacao}` : null,
+  ].filter(Boolean);
+  return analisar(ContratoSchema, CONTRATO_SISTEMA, arquivos, linhas.join("\n"));
 }

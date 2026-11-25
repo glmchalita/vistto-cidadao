@@ -11,12 +11,12 @@ const FERRAMENTAS = [
   {
     Icone: FileText,
     titulo: "Entenda o contrato",
-    texto: "Mande o contrato em foto ou PDF. Você recebe a explicação em palavras simples e o aviso de cláusulas abusivas.",
+    texto: "Mande o contrato ou a matrícula em foto ou PDF. Você recebe a explicação em palavras simples, o aviso de cláusulas abusivas e se o imóvel é HIS.",
   },
   {
     Icone: Scale,
     titulo: "Aluguel justo",
-    texto: "Compare o preço com a média do bairro, veja o peso na sua renda e confira o reajuste pelo índice oficial.",
+    texto: "Compare o preço com a média do bairro, confira o reajuste e descubra o aluguel máximo se o imóvel for de habitação social (HIS ou HMP).",
   },
 ];
 
@@ -35,7 +35,7 @@ export default function Home() {
 
       <main id="conteudo" className="mx-auto w-full max-w-5xl flex-1 px-4">
         <section className="py-12 sm:py-16">
-          <p className="mb-3 font-semibold text-marca-forte">Gratuito · Para quem mora de aluguel em São Paulo</p>
+          <p className="mb-3 font-semibold text-marca-forte">Gratuito · Para quem mora de aluguel em qualquer região de São Paulo</p>
           <h1 className="max-w-3xl text-4xl font-bold leading-tight sm:text-5xl">
             Antes de pagar ou assinar, confira se o aluguel é seguro.
           </h1>

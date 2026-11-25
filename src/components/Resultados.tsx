@@ -3,12 +3,14 @@
 import type { Comparacao } from "@/lib/aluguel";
 import type { ConferenciaBoleto } from "@/lib/boleto";
 import type { ContratoResultado, GolpeResultado } from "@/lib/claude";
+import type { ConferenciaHis } from "@/lib/his";
 import type { Risco } from "@/lib/tipos";
 import { ROTULO_RISCO, ROTULO_SINAL } from "@/lib/tipos";
 import { Ouvir } from "./Acessibilidade";
 import { brl, Cartao, pct, Semaforo } from "./ui";
 
 export type ResultadoGolpe = GolpeResultado & { boleto: ConferenciaBoleto | null };
+export type ResultadoContrato = ContratoResultado & { his?: ConferenciaHis | null; faixaHisInformada?: string | null };
 
 export type ResultadoReajuste = {
   indice: string;
@@ -162,13 +164,18 @@ const AVALIACAO: Record<string, { rotulo: string; classe: string }> = {
   abusiva: { rotulo: "Abusiva", classe: "border-vermelho bg-vermelho-fundo text-vermelho-texto" },
 };
 
-export function VerContrato({ r }: { r: ContratoResultado }) {
+export function VerContrato({ r }: { r: ResultadoContrato }) {
   const ordem = { abusiva: 0, atencao: 1, ok: 2 };
   const clausulas = [...r.clausulas].sort((a, b) => ordem[a.avaliacao] - ordem[b.avaliacao]);
   const problemas = clausulas.filter((c) => c.avaliacao !== "ok");
   const fala = [
     `Resultado: ${ROTULO_RISCO[r.risco]}.`,
     r.resumo_simples,
+    r.his
+      ? r.his.acimaDoTeto
+        ? `Este imóvel é de habitação social, ${r.his.nomeFaixa}. O aluguel máximo permitido é ${brl(r.his.teto)} e o contrato cobra mais do que isso.`
+        : `Este imóvel é de habitação social, ${r.his.nomeFaixa}. O aluguel máximo permitido é ${brl(r.his.teto)}.`
+      : "",
     problemas.length
       ? `Pontos de atenção: ${problemas.map((c) => `${c.titulo}. ${c.explicacao_simples}`).join(" ")}`
       : "Não encontrei cláusulas abusivas.",
@@ -200,6 +207,31 @@ export function VerContrato({ r }: { r: ContratoResultado }) {
             ))}
           </dl>
         </Cartao>
+      )}
+
+      {r.his ? (
+        <>
+          <QuadroHis h={r.his} />
+          {r.habitacao_social && !r.habitacao_social.tem_clausula_de_enquadramento && (
+            <p className="rounded-xl border-2 border-amarelo bg-amarelo-fundo p-4">
+              <strong>Atenção:</strong> o contrato de um imóvel HIS ou HMP precisa ter uma cláusula mostrando que a renda da família
+              se enquadra na faixa (Decreto 63.130/2024, art. 7º, IV). Não encontramos essa cláusula.
+            </p>
+          )}
+          {r.his.acimaDoTeto && <Lista titulo="Sobre o teto de aluguel: o que fazer" ordenada itens={PASSOS_HIS} />}
+        </>
+      ) : (
+        r.habitacao_social && (
+          <p className="rounded-xl border border-borda p-4 text-suave">
+            <strong className="text-texto">HIS ou HMP: </strong>
+            {r.habitacao_social.classificacao === "HIS_sem_faixa"
+              ? "o documento indica habitação de interesse social, mas não diz a faixa (HIS 1 ou HIS 2). Confira a faixa na matrícula e use a aba “É HIS? Qual o teto?” em Aluguel justo."
+              : "o documento não menciona habitação de interesse social (HIS) nem de mercado popular (HMP). Isso não prova que o imóvel não seja: a classificação fica averbada na matrícula do imóvel, no cartório."}
+          </p>
+        )
+      )}
+      {r.habitacao_social?.evidencia && (
+        <blockquote className="border-l-4 border-borda pl-3 text-suave">Trecho do documento: “{r.habitacao_social.evidencia}”</blockquote>
       )}
 
       <Cartao>
@@ -369,9 +401,80 @@ export function VerReajuste({ r }: { r: ResultadoReajuste }) {
   );
 }
 
+/** Quadro com o teto de aluguel de um imovel HIS/HMP (usado sozinho e dentro do contrato). */
+export function QuadroHis({ h }: { h: ConferenciaHis }) {
+  return (
+    <Cartao>
+      <h2 className="mb-1 text-xl font-bold">Imóvel de habitação social: {h.nomeFaixa}</h2>
+      <p className="mb-3 text-suave">
+        Unidades HIS e HMP foram construídas com incentivo da prefeitura. Por {h.referencia.prazoAnos} anos, o aluguel tem limite.
+      </p>
+      <dl className="grid gap-x-6 gap-y-1 sm:grid-cols-3">
+        <Par t="Aluguel máximo permitido" v={brl(h.teto)} />
+        {h.aluguel !== null && <Par t="Aluguel cobrado" v={brl(h.aluguel)} />}
+        {h.excesso !== null && <Par t="Cobrado a mais por mês" v={brl(h.excesso)} />}
+      </dl>
+      {h.aluguel !== null && (
+        <p className={`mt-3 text-lg font-semibold ${h.acimaDoTeto ? "text-vermelho-texto" : "text-verde-texto"}`}>
+          {h.acimaDoTeto
+            ? `O aluguel está acima do teto. Em um ano, são ${brl(h.excessoAnual ?? 0)} a mais.`
+            : "O aluguel está dentro do teto."}
+        </p>
+      )}
+      {h.familiaSeEnquadra !== null && (
+        <p className="mt-2 text-lg">
+          {h.familiaSeEnquadra
+            ? "Pela renda informada, sua família se enquadra na faixa deste imóvel."
+            : h.faixaDaFamilia
+              ? `Pela renda informada, sua família se enquadra em ${h.faixaDaFamilia}, faixa acima da deste imóvel. A regra reserva a unidade para famílias de renda menor.`
+              : "Pela renda informada, sua família está acima do limite das faixas HIS e HMP."}
+        </p>
+      )}
+      <p className="mt-4 text-sm text-suave">
+        Conta: 30% da renda familiar máxima da faixa {h.nomeFaixa} ({brl(h.rendaMaximaFaixa)} em {h.referencia.ano}). Regra:{" "}
+        {h.referencia.decretoAluguel}. Faixas de renda: {h.referencia.decretoRenda}. A prefeitura não publica o teto em reais; o
+        valor acima é o resultado da conta. A norma não diz se condomínio e IPTU entram no limite, então comparamos só o aluguel.
+      </p>
+    </Cartao>
+  );
+}
+
+const PASSOS_HIS = [
+  "Peça a matrícula do imóvel no cartório de registro de imóveis: a destinação HIS ou HMP fica averbada nela.",
+  "Mostre este cálculo ao proprietário ou à imobiliária e peça a correção do valor por escrito.",
+  "Se não resolver, denuncie na Subprefeitura da região do imóvel, que é quem fiscaliza, e procure a Defensoria Pública.",
+];
+
+export function VerHis({ r }: { r: ConferenciaHis }) {
+  const frases = [
+    `Para um imóvel ${r.nomeFaixa}, o aluguel máximo permitido é ${brl(r.teto)} por mês.`,
+    r.aluguel !== null
+      ? r.acimaDoTeto
+        ? `Estão cobrando ${brl(r.aluguel)}, que é ${brl(r.excesso ?? 0)} acima do teto.`
+        : `O valor cobrado, ${brl(r.aluguel)}, está dentro do teto.`
+      : "",
+    r.familiaSeEnquadra === false ? "Pela renda informada, sua família não se enquadra na faixa deste imóvel." : "",
+  ].filter(Boolean);
+  return (
+    <div className="space-y-4">
+      <Semaforo risco={r.risco}>
+        {frases.map((f, i) => (
+          <p key={i} className={i ? "mt-2" : ""}>
+            {f}
+          </p>
+        ))}
+      </Semaforo>
+      <Ouvir texto={`Resultado: ${ROTULO_RISCO[r.risco]}. ${frases.join(" ")}`} />
+      <QuadroHis h={r} />
+      {r.acimaDoTeto && <Lista titulo="O que fazer agora" ordenada itens={PASSOS_HIS} />}
+    </div>
+  );
+}
+
 /** Mostra um resultado salvo no historico, qualquer que seja o tipo. */
 export function VerResultado({ tipo, resultado }: { tipo: string; resultado: unknown }) {
-  if (tipo === "contrato") return <VerContrato r={resultado as ContratoResultado} />;
+  if (tipo === "contrato") return <VerContrato r={resultado as ResultadoContrato} />;
+  if (tipo === "his") return <VerHis r={resultado as ConferenciaHis} />;
   if (tipo === "preco") return <VerPreco r={resultado as Comparacao} />;
   if (tipo === "reajuste") return <VerReajuste r={resultado as ResultadoReajuste} />;
   return <VerGolpe r={resultado as ResultadoGolpe} />;
