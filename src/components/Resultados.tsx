@@ -119,8 +119,8 @@ export function VerGolpe({ r }: { r: ResultadoGolpe }) {
               )}
               <dl className="mt-3 grid gap-x-6 gap-y-1 sm:grid-cols-2">
                 {r.boleto.banco && <Par t="Banco emissor (pelo código)" v={`${r.boleto.banco} (${r.boleto.codigoBanco})`} />}
-                {r.boleto.valor && <Par t="Valor dentro do código" v={brl(r.boleto.valor)} />}
-                {r.boleto.vencimento && <Par t="Vencimento dentro do código" v={r.boleto.vencimento.split("-").reverse().join("/")} />}
+                {r.boleto.valido && r.boleto.valor && <Par t="Valor dentro do código" v={brl(r.boleto.valor)} />}
+                {r.boleto.valido && r.boleto.vencimento && <Par t="Vencimento dentro do código" v={r.boleto.vencimento.split("-").reverse().join("/")} />}
               </dl>
               <p className="mt-3 text-sm text-suave">
                 Um código válido mostra que o boleto foi gerado corretamente, mas não prova que o dinheiro vai para o dono do imóvel.
