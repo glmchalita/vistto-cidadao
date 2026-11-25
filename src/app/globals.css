@@ -1,26 +1,98 @@
 @import "tailwindcss";
 
+/* Vistto Cidadao: base da familia Vistto (roxo) com verde-petroleo como cor
+   propria do produto social. Todas as cores passam por variaveis para que o
+   modo de alto contraste troque o tema inteiro de uma vez. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --fundo: #f6f7fb;
+  --cartao: #ffffff;
+  --texto: #1a1a2e;
+  --suave: #55586b;
+  --borda: #d9dbe7;
+  --marca: #0b7a6e;
+  --marca-forte: #075e55;
+  --marca-clara: #e3f4f1;
+  --sobre-marca: #ffffff;
+  --vistto: #6c63ff;
+  --verde: #0aac23;
+  --verde-texto: #006c10;
+  --verde-fundo: #e8f7ea;
+  --amarelo: #fbb315;
+  --amarelo-texto: #7a5200;
+  --amarelo-fundo: #fff5d9;
+  --vermelho: #dc3c3d;
+  --vermelho-texto: #a81c1d;
+  --vermelho-fundo: #fdeaea;
+  --grade: #e7e7e7;
 }
+
+html.contraste {
+  --fundo: #000000;
+  --cartao: #000000;
+  --texto: #ffffff;
+  --suave: #ffffff;
+  --borda: #ffffff;
+  --marca: #ffe600;
+  --marca-forte: #fff27a;
+  --marca-clara: #1a1a00;
+  --sobre-marca: #000000;
+  --vistto: #ffffff;
+  --verde: #3ddc55;
+  --verde-texto: #7dff8f;
+  --verde-fundo: #000000;
+  --amarelo: #ffd23f;
+  --amarelo-texto: #ffe27a;
+  --amarelo-fundo: #000000;
+  --vermelho: #ff6b6b;
+  --vermelho-texto: #ff9c9c;
+  --vermelho-fundo: #000000;
+  --grade: #555555;
+}
+
+/* Tamanho do texto: tudo usa rem, entao basta mudar a base. */
+html[data-fonte="1"] { font-size: 112.5%; }
+html[data-fonte="2"] { font-size: 131.25%; }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-fundo: var(--fundo);
+  --color-cartao: var(--cartao);
+  --color-texto: var(--texto);
+  --color-suave: var(--suave);
+  --color-borda: var(--borda);
+  --color-marca: var(--marca);
+  --color-marca-forte: var(--marca-forte);
+  --color-marca-clara: var(--marca-clara);
+  --color-sobre-marca: var(--sobre-marca);
+  --color-vistto: var(--vistto);
+  --color-verde: var(--verde);
+  --color-verde-texto: var(--verde-texto);
+  --color-verde-fundo: var(--verde-fundo);
+  --color-amarelo: var(--amarelo);
+  --color-amarelo-texto: var(--amarelo-texto);
+  --color-amarelo-fundo: var(--amarelo-fundo);
+  --color-vermelho: var(--vermelho);
+  --color-vermelho-texto: var(--vermelho-texto);
+  --color-vermelho-fundo: var(--vermelho-fundo);
+  --color-grade: var(--grade);
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+/* Foco sempre visivel para quem navega pelo teclado. */
+:focus-visible {
+  outline: 3px solid var(--marca);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+html.contraste a { text-decoration: underline; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
 }
