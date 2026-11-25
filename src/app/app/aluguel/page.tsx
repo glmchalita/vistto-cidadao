@@ -9,7 +9,8 @@ import type { Bairro, Comparacao } from "@/lib/aluguel";
 function numero(texto: string): number {
   const limpo = texto.replace(/[^\d.,]/g, "");
   if (limpo.includes(",")) return Number(limpo.replace(/\./g, "").replace(",", "."));
-  return Number(limpo);
+  // Sem virgula, ponto seguido de exatamente 3 digitos e separador de milhar ("2.100").
+  return Number(limpo.replace(/\.(?=\d{3}(\.|$))/g, ""));
 }
 
 function Comparar({ bairros }: { bairros: Bairro[] }) {
